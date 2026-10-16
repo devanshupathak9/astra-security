@@ -2,6 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 .env
+tools/
 
 # inputs and outputs are not committed
 apks/*

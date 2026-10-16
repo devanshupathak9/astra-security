@@ -33,10 +33,9 @@ APK ─► ingest ─► App ─► scan(teacher) ─► findings ─► lessons
 ## Setup
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env            # add your keys
-# external tool: jadx on PATH (needs Java 11+): https://github.com/skylot/jadx/releases
+./setup.sh                      # venv + deps, local Java + jadx in tools/, sample APK, .env
+source .venv/bin/activate
+# then add your API keys to .env
 ```
 
 ## Run

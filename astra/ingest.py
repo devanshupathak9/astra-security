@@ -8,6 +8,7 @@
 """
 import fnmatch
 import re
+import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -22,6 +23,8 @@ PACKAGE_RE = re.compile(r"^package\s+([\w.]+);", re.MULTILINE)
 def decompile(apk_path: str, out_dir: str, jadx: str = "jadx") -> Path:
     """Run jadx once; reuse the output if it already exists."""
     out = Path(out_dir)
+    if not Path(jadx).exists():
+        jadx = shutil.which("jadx") or jadx
     if not (out / "sources").is_dir():
         print(f"Decompiling {apk_path} -> {out} (takes a minute)...")
         # jadx exits non-zero when a few classes fail to decompile, which is normal
