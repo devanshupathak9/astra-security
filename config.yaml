@@ -1,0 +1,47 @@
+# Everything app- or model-specific lives here, never in code.
+
+app:
+  apk_path: apks/InsecureShop.apk
+  groundtruth: groundtruth/insecureshop.yaml   # optional; if missing, teacher findings are used as labels
+  # Code under these package prefixes is treated as third-party and skipped
+  library_prefixes: [android, androidx, kotlin, kotlinx, com.google, okhttp3, okio, retrofit2, org.intellij, org.jetbrains]
+
+models:
+  # Adding a model = adding an entry here. Any OpenAI-compatible API works via base_url.
+  teacher:
+    model: gpt-4o-mini            # set to a model your OpenAI key can use
+    api_key_env: OPENAI_API_KEY
+    base_url: null                # null = api.openai.com
+    temperature: 0.0
+    max_chunk_chars: 60000
+  student:
+    model: llama-3.1-8b-instant   # any open model on Groq
+    api_key_env: GROQ_API_KEY
+    base_url: https://api.groq.com/openai/v1
+    temperature: 0.0
+    max_chunk_chars: 12000        # small models / free tiers have small context and rate limits
+
+loop:
+  student_runs: 3                 # repeat each student scan to measure variance
+  max_lessons: 12
+
+# Shared vocabulary for findings and ground truth. Matching is done on these keys.
+categories:
+  - hardcoded_secret
+  - webview_untrusted_url
+  - webview_insecure_settings
+  - ssl_validation_bypass
+  - intent_redirection
+  - exported_component
+  - implicit_intent
+  - insecure_broadcast_receiver
+  - content_provider_exposure
+  - fileprovider_misconfig
+  - arbitrary_file_theft
+  - insecure_set_result
+  - insecure_data_storage
+  - insecure_logging
+  - code_execution
+  - vulnerable_dependency
+  - cloud_misconfiguration
+  - other

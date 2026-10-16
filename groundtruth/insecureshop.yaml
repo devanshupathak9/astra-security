@@ -1,0 +1,81 @@
+# The 19 vulnerabilities from the InsecureShop README, mapped to config.yaml categories.
+# `categories`: which finding categories count as a match (first is primary).
+# `location`: class/component hint, filled in after decompiling (optional).
+# This file is data, not code: a new app just needs its own file like this.
+
+- id: 1
+  title: Hardcoded Credentials
+  categories: [hardcoded_secret]
+  location: ""
+- id: 2
+  title: Insufficient URL Validation
+  categories: [webview_untrusted_url]
+  location: ""
+- id: 3
+  title: Weak Host Validation Check
+  categories: [webview_untrusted_url]
+  location: ""
+- id: 4
+  title: Arbitrary Code Execution
+  categories: [code_execution]
+  location: ""
+- id: 5
+  title: Access to Protected Components
+  categories: [intent_redirection, exported_component]
+  location: ""
+- id: 6
+  title: Unprotected Data URIs
+  categories: [webview_untrusted_url]
+  location: ""
+- id: 7
+  title: Theft of Arbitrary Files
+  categories: [arbitrary_file_theft, exported_component]
+  location: ""
+- id: 8
+  title: Using Components with Known Vulnerabilities
+  categories: [vulnerable_dependency]
+  location: ""
+- id: 9
+  title: Insecure Broadcast Receiver
+  categories: [insecure_broadcast_receiver]
+  location: ""
+- id: 10
+  title: AWS Cognito Misconfiguration
+  categories: [cloud_misconfiguration, hardcoded_secret]
+  location: ""
+- id: 11
+  title: Insecure use of FilePaths in FileProvider
+  categories: [fileprovider_misconfig]
+  location: ""
+- id: 12
+  title: Implicit Intent Broadcast with Sensitive Data
+  categories: [implicit_intent]
+  location: ""
+- id: 13
+  title: Intercepting Implicit Intent to Load Arbitrary URL
+  categories: [implicit_intent, webview_untrusted_url]
+  location: ""
+- id: 14
+  title: Insecure setResult in Exported Activity
+  categories: [insecure_set_result, intent_redirection]
+  location: ""
+- id: 15
+  title: Insecure Content Provider
+  categories: [content_provider_exposure]
+  location: ""
+- id: 16
+  title: Lack of SSL Certificate Validation
+  categories: [ssl_validation_bypass]
+  location: ""
+- id: 17
+  title: Insecure WebView Properties Enabled
+  categories: [webview_insecure_settings]
+  location: ""
+- id: 18
+  title: Insecure Data Storage
+  categories: [insecure_data_storage]
+  location: ""
+- id: 19
+  title: Insecure Logging
+  categories: [insecure_logging]
+  location: ""
