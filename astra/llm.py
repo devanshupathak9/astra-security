@@ -17,6 +17,7 @@ class LLM:
         self.model = model
         self.temperature = temperature
         self.max_chunk_chars = max_chunk_chars
+        self.usage = {"input": 0, "output": 0}
         self.client = OpenAI(api_key=os.environ[api_key_env], base_url=base_url)
 
     def ask_json(self, system: str, user: str, retries: int = 3) -> dict:
@@ -30,6 +31,9 @@ class LLM:
                     messages=[{"role": "system", "content": system},
                               {"role": "user", "content": user}],
                 )
+                if resp.usage:
+                    self.usage["input"] += resp.usage.prompt_tokens
+                    self.usage["output"] += resp.usage.completion_tokens
                 return json.loads(resp.choices[0].message.content)
             except Exception:
                 if attempt == retries - 1:

@@ -1,81 +1,81 @@
 # The 19 vulnerabilities from the InsecureShop README, mapped to config.yaml categories.
-# `categories`: which finding categories count as a match (first is primary).
-# `location`: class/component hint, filled in after decompiling (optional).
+# `categories`: finding categories that count as this bug (first is primary).
+# `files`: where the bug lives (a finding's file must end with one of these).
 # This file is data, not code: a new app just needs its own file like this.
 
 - id: 1
   title: Hardcoded Credentials
   categories: [hardcoded_secret]
-  location: ""
+  files: [util/Util.java]
 - id: 2
-  title: Insufficient URL Validation
+  title: Insufficient URL Validation (deep link loads any URL)
   categories: [webview_untrusted_url]
-  location: ""
+  files: [WebViewActivity.java]
 - id: 3
   title: Weak Host Validation Check
   categories: [webview_untrusted_url]
-  location: ""
+  files: [WebViewActivity.java]
 - id: 4
-  title: Arbitrary Code Execution
+  title: Arbitrary Code Execution via third-party package context
   categories: [code_execution]
-  location: ""
+  files: [LoginActivity.java]
 - id: 5
-  title: Access to Protected Components
-  categories: [intent_redirection, exported_component]
-  location: ""
+  title: Access to Protected Components (embedded intent -> startActivity)
+  categories: [intent_redirection]
+  files: [WebView2Activity.java]
 - id: 6
-  title: Unprotected Data URIs
+  title: Unprotected Data URIs (intent data passed to loadUrl)
   categories: [webview_untrusted_url]
-  location: ""
+  files: [WebView2Activity.java]
 - id: 7
-  title: Theft of Arbitrary Files
-  categories: [arbitrary_file_theft, exported_component]
-  location: ""
+  title: Theft of Arbitrary Files via ChooserActivity
+  categories: [arbitrary_file_theft]
+  files: [ChooserActivity.java]
 - id: 8
   title: Using Components with Known Vulnerabilities
   categories: [vulnerable_dependency]
-  location: ""
+  files: [AndroidManifest.xml, third-party libraries]
 - id: 9
-  title: Insecure Broadcast Receiver
+  title: Insecure Broadcast Receiver (registered in exported activity, web_url)
   categories: [insecure_broadcast_receiver]
-  location: ""
+  files: [AboutUsActivity.java, CustomReceiver.java]
 - id: 10
   title: AWS Cognito Misconfiguration
   categories: [cloud_misconfiguration, hardcoded_secret]
-  location: ""
+  files: [res/values/strings.xml]
 - id: 11
   title: Insecure use of FilePaths in FileProvider
   categories: [fileprovider_misconfig]
-  location: ""
+  files: [res/xml/provider_paths.xml]
 - id: 12
   title: Implicit Intent Broadcast with Sensitive Data
   categories: [implicit_intent]
-  location: ""
+  files: [AboutUsActivity.java]
 - id: 13
   title: Intercepting Implicit Intent to Load Arbitrary URL
-  categories: [implicit_intent, webview_untrusted_url]
-  location: ""
+  categories: [implicit_intent]
+  files: [SendingDataViaActionActivity.java, ProductDetailBroadCast.java, ProductAdapter.java]
 - id: 14
   title: Insecure setResult in Exported Activity
   categories: [insecure_set_result, intent_redirection]
-  location: ""
+  files: [ResultActivity.java]
 - id: 15
   title: Insecure Content Provider
   categories: [content_provider_exposure]
-  location: ""
+  files: [InsecureShopProvider.java, AndroidManifest.xml]
 - id: 16
   title: Lack of SSL Certificate Validation
   categories: [ssl_validation_bypass]
-  location: ""
+  files: [CustomWebViewClient.java]
 - id: 17
   title: Insecure WebView Properties Enabled
   categories: [webview_insecure_settings]
-  location: ""
+  files: [WebViewActivity.java, WebView2Activity.java, PrivateActivity.java]
 - id: 18
-  title: Insecure Data Storage
+  title: Insecure Data Storage (plaintext credentials)
   categories: [insecure_data_storage]
-  location: ""
+  files: [util/Prefs.java, LoginActivity.java]
 - id: 19
-  title: Insecure Logging
+  title: Insecure Logging (credentials in logcat)
   categories: [insecure_logging]
-  location: ""
+  files: [LoginActivity.java]

@@ -4,7 +4,9 @@
    manifest + resources, so one tool is enough.
 2. Parse AndroidManifest.xml into Components (exported? permission? intent-filters?).
 3. Keep only app code (classes under the manifest package), skip build-generated files.
-4. List third-party libraries instead of scanning them.
+4. Blank out decompiler noise lines (Kotlin metadata, null checks) to save tokens.
+   Lines are blanked, not deleted, so line numbers still match the files on disk.
+5. List third-party libraries instead of scanning them.
 """
 import fnmatch
 import re
@@ -74,7 +76,8 @@ def load_app(app_path: str, config: dict) -> App:
     if app_class and not _starts_with_any(app_class, cfg["platform_prefixes"]):
         app_prefixes.append(app_class.rsplit(".", 1)[0])
 
-    sources, libraries = {}, set()
+    noise = [re.compile(p) for p in cfg["noise_lines"]]
+    sources, classes, libraries = {}, {}, set()
     for java in root.rglob("*.java"):
         rel = str(java.relative_to(root))
         code = java.read_text(errors="ignore")
@@ -84,7 +87,8 @@ def load_app(app_path: str, config: dict) -> App:
             if pkg and not _starts_with_any(pkg, cfg["platform_prefixes"]):
                 libraries.add(".".join(pkg.split(".")[:3]))
         elif not any(fnmatch.fnmatch(rel, p) for p in cfg["skip_files"]):
-            sources[rel] = code
+            sources[rel] = _clean(code, noise)
+            classes[f"{pkg}.{java.stem}"] = rel
 
     resources = {}
     for pattern in cfg["resource_globs"]:
@@ -99,6 +103,7 @@ def load_app(app_path: str, config: dict) -> App:
         manifest_xml=manifest_xml,
         components=components,
         sources=dict(sorted(sources.items())),
+        classes=classes,
         resources=resources,
         libraries=_collapse(libraries) + sorted(versions),
     )
@@ -126,6 +131,10 @@ def _full_name(name: str | None, package: str) -> str:
 
 def _starts_with_any(name: str, prefixes: list[str]) -> bool:
     return any(name == p or name.startswith(p + ".") for p in prefixes)
+
+
+def _clean(code: str, noise: list[re.Pattern]) -> str:
+    return "\n".join("" if any(p.search(line) for p in noise) else line for line in code.splitlines())
 
 
 def _collapse(packages: set[str]) -> list[str]:

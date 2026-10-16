@@ -15,6 +15,8 @@ ingest:
   platform_prefixes: [android, androidx, kotlin, kotlinx, java, javax]
   # Android build-generated files: never contain app logic
   skip_files: ["*/R.java", "*/R$*.java", "*/BR.java", "*/databinding/*", "*/DataBinderMapperImpl.java", "*/DataBindingInfo.java"]
+  # Decompiler noise: lines matching these regexes are blanked (Kotlin metadata, null checks)
+  noise_lines: ['^\s*@Metadata\(', '^\s*Intrinsics\.check\w*\(', '^\s*/\* JADX INFO']
   # Resource files worth scanning (glob, relative to the decompiled folder)
   resource_globs: ["**/res/xml/*.xml", "**/res/values/strings.xml", "**/assets/*.json", "**/assets/*.properties"]
 
@@ -25,7 +27,7 @@ models:
     api_key_env: OPENAI_API_KEY
     base_url: null                # null = api.openai.com
     temperature: 0.0
-    max_chunk_chars: 60000        # how much code goes into one request
+    max_chunk_chars: 20000        # how much code goes into one request
   student:
     model: llama-3.1-8b-instant   # any open model on Groq
     api_key_env: GROQ_API_KEY
@@ -34,6 +36,12 @@ models:
     max_chunk_chars: 12000        # small models / free tiers have small context and rate limits
 
 scan:
+  # How code is passed to the model:
+  #   packed   - files packed together up to max_chunk_chars
+  #   per_file - one file per request
+  #   slices   - one request per manifest component: its file + app files it references
+  strategy: slices
+  slice_depth: 2                  # how many reference hops to follow from each component
   drop_unverified: true           # drop findings whose evidence quote isn't in the code
 
 loop:

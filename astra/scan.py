@@ -1,6 +1,6 @@
 """Step 2 - Scan: App + model (+ optional lessons) -> list[Finding].
 
-1. Split the app into chunks that fit the model (chunker.py).
+1. Split the app into chunks that fit the model (chunker.py, `strategy` decides how).
 2. Ask the model for findings as JSON, one request per chunk (prompts/scan.md).
 3. Grounding check: keep only findings whose evidence quote is really in the code.
 4. De-duplicate.
@@ -15,13 +15,13 @@ from astra.schemas import App, Finding
 SEVERITIES = {"low", "medium", "high", "critical"}
 
 
-def scan(app: App, llm: LLM, categories: list[str], lessons: list[str] | None = None,
-         drop_unverified: bool = True) -> list[Finding]:
+def scan(app: App, llm: LLM, categories: list[str], strategy: str = "packed", depth: int = 2,
+         lessons: list[str] | None = None, drop_unverified: bool = True) -> list[Finding]:
     system = Path("prompts/scan.md").read_text().format(categories=", ".join(categories))
     if lessons:
         system += "\n\nLessons from an expert reviewer. Apply them:\n" + "\n".join(f"- {l}" for l in lessons)
 
-    chunks = make_chunks(app, llm.max_chunk_chars)
+    chunks = make_chunks(app, llm.max_chunk_chars, strategy, depth)
     all_files = {"AndroidManifest.xml": app.manifest_xml, **app.resources, **app.sources}
 
     findings, dropped = [], 0
@@ -41,6 +41,7 @@ def scan(app: App, llm: LLM, categories: list[str], lessons: list[str] | None = 
 
     findings = _dedupe(findings)
     print(f"  {len(findings)} findings ({dropped} dropped: evidence not found in code)")
+    print(f"  tokens: {llm.usage['input']:,} in / {llm.usage['output']:,} out")
     return findings
 
 

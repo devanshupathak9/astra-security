@@ -19,6 +19,7 @@ class App:
     manifest_xml: str
     components: list[Component]
     sources: dict[str, str]       # relative file path -> decompiled Java (app code only)
+    classes: dict[str, str]       # fully qualified class name -> file path in `sources`
     resources: dict[str, str]     # relative file path -> text (xml configs, strings)
     libraries: list[str]          # third-party packages / versions found in the APK
 
@@ -47,5 +48,5 @@ class Finding:
 class GroundTruth:
     id: int
     title: str
-    categories: list[str]
-    location: str = ""
+    categories: list[str]                              # finding categories that count as this bug
+    files: list[str] = field(default_factory=list)     # where it lives (file path suffixes)

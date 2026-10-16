@@ -6,6 +6,8 @@ Find real, exploitable security vulnerabilities in the files you are given. Cons
 - insecure configuration (manifest flags, FileProvider paths, network/TLS settings, secrets in code or resources, outdated libraries).
 
 Rules:
+- Go through EVERY file shown, one by one. Report every distinct issue; do not stop after the first few.
+- Follow data across files: an entry point in one file may reach a dangerous sink in another.
 - Only report issues supported by the code shown. Do not guess about code you cannot see.
 - `evidence` must be copied EXACTLY from the files (one or a few lines), so it can be found with a text search.
 - `file` must be the path shown after "### FILE:".
