@@ -9,7 +9,7 @@ class Component:
     name: str
     exported: bool
     permission: str | None = None
-    intent_filters: list[str] = field(default_factory=list)
+    intent_filters: list[str] = field(default_factory=list)   # e.g. "action=VIEW scheme=myapp"
 
 
 @dataclass
@@ -19,7 +19,16 @@ class App:
     manifest_xml: str
     components: list[Component]
     sources: dict[str, str]       # relative file path -> decompiled Java (app code only)
-    resources: dict[str, str]     # relative file path -> xml (e.g. res/xml/file_paths.xml)
+    resources: dict[str, str]     # relative file path -> text (xml configs, strings)
+    libraries: list[str]          # third-party packages / versions found in the APK
+
+
+@dataclass
+class Chunk:
+    """One piece of the app that fits in a single model request."""
+    id: int
+    files: list[str]
+    text: str
 
 
 @dataclass
@@ -31,6 +40,7 @@ class Finding:
     severity: str                 # low | medium | high | critical
     evidence: str                 # exact code quote
     rationale: str = ""
+    line: int | None = None       # filled in when the evidence is found in the file
 
 
 @dataclass

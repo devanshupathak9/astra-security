@@ -6,6 +6,7 @@ A provider with a different API would be a second class with the same `ask_json`
 """
 import json
 import os
+import time
 
 from openai import OpenAI
 
@@ -18,16 +19,22 @@ class LLM:
         self.max_chunk_chars = max_chunk_chars
         self.client = OpenAI(api_key=os.environ[api_key_env], base_url=base_url)
 
-    def ask_json(self, system: str, user: str) -> dict:
-        """Send a prompt and return the model's reply parsed as JSON."""
-        resp = self.client.chat.completions.create(
-            model=self.model,
-            temperature=self.temperature,
-            response_format={"type": "json_object"},
-            messages=[{"role": "system", "content": system},
-                      {"role": "user", "content": user}],
-        )
-        return json.loads(resp.choices[0].message.content)
+    def ask_json(self, system: str, user: str, retries: int = 3) -> dict:
+        """Send a prompt and return the model's reply parsed as JSON (retries on errors)."""
+        for attempt in range(retries):
+            try:
+                resp = self.client.chat.completions.create(
+                    model=self.model,
+                    temperature=self.temperature,
+                    response_format={"type": "json_object"},
+                    messages=[{"role": "system", "content": system},
+                              {"role": "user", "content": user}],
+                )
+                return json.loads(resp.choices[0].message.content)
+            except Exception:
+                if attempt == retries - 1:
+                    raise
+                time.sleep(5 * (attempt + 1))   # rate limits on free tiers
 
 
 def get_llm(config: dict, role: str) -> LLM:

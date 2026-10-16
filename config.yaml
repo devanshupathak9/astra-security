@@ -1,10 +1,22 @@
 # Everything app- or model-specific lives here, never in code.
 
 app:
-  apk_path: apks/InsecureShop.apk
-  groundtruth: groundtruth/insecureshop.yaml   # optional; if missing, teacher findings are used as labels
-  # Code under these package prefixes is treated as third-party and skipped
-  library_prefixes: [android, androidx, kotlin, kotlinx, com.google, okhttp3, okio, retrofit2, org.intellij, org.jetbrains]
+  path: apks/InsecureShop.apk                 # an .apk, or an already-decompiled folder
+  groundtruth: groundtruth/insecureshop.yaml  # optional; if missing, teacher findings are used as labels
+
+tools:
+  jadx: jadx                      # command on PATH (or full path)
+
+ingest:
+  # App code = classes under the manifest package. Extra app packages can be added here.
+  extra_app_prefixes: []
+  # Android / Kotlin platform code: never app code, and not listed as libraries
+  # (their versions come from META-INF/*.version instead)
+  platform_prefixes: [android, androidx, kotlin, kotlinx, java, javax]
+  # Android build-generated files: never contain app logic
+  skip_files: ["*/R.java", "*/R$*.java", "*/BR.java", "*/databinding/*", "*/DataBinderMapperImpl.java", "*/DataBindingInfo.java"]
+  # Resource files worth scanning (glob, relative to the decompiled folder)
+  resource_globs: ["**/res/xml/*.xml", "**/res/values/strings.xml", "**/assets/*.json", "**/assets/*.properties"]
 
 models:
   # Adding a model = adding an entry here. Any OpenAI-compatible API works via base_url.
@@ -13,7 +25,7 @@ models:
     api_key_env: OPENAI_API_KEY
     base_url: null                # null = api.openai.com
     temperature: 0.0
-    max_chunk_chars: 60000
+    max_chunk_chars: 60000        # how much code goes into one request
   student:
     model: llama-3.1-8b-instant   # any open model on Groq
     api_key_env: GROQ_API_KEY
@@ -21,9 +33,14 @@ models:
     temperature: 0.0
     max_chunk_chars: 12000        # small models / free tiers have small context and rate limits
 
+scan:
+  drop_unverified: true           # drop findings whose evidence quote isn't in the code
+
 loop:
   student_runs: 3                 # repeat each student scan to measure variance
   max_lessons: 12
+
+output_dir: runs
 
 # Shared vocabulary for findings and ground truth. Matching is done on these keys.
 categories:
