@@ -56,10 +56,10 @@ python main.py scan --app apks/other.apk      # a different app (.apk or decompi
 ## Teacher -> student loop
 
 1. Teacher scans the app.
-2. Student scans it N times without help -> recall **before**.
-3. Teacher turns its findings into general lessons in one call; lessons naming anything
+2. Teacher turns its findings into general lessons in one call; lessons naming anything
    from the app (class names, package, custom actions) are rejected.
-4. Student scans N times with the lessons in its prompt -> recall **after**.
-5. `runs/<ts>/report.md`: before vs after (mean ± std), per-bug hit counts, lessons used.
+3. For each student in `loop.students` (two open models from different families by default):
+   N scans without lessons -> recall **before**, N scans with the lessons -> recall **after**.
+4. `runs/<ts>/report.md`: before vs after per student (mean ± std), per-bug hit counts.
 
 Without a ground-truth file, the teacher's findings are used as labels.

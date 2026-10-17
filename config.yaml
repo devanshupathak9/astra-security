@@ -34,6 +34,12 @@ models:
     base_url: https://api.groq.com/openai/v1
     temperature: 0.0
     max_chunk_chars: 12000        # small models / free tiers have small context and rate limits
+  student2:
+    model: qwen/qwen3.8-27b       # a second open model from a different family
+    api_key_env: GROQ_API_KEY
+    base_url: https://api.groq.com/openai/v1
+    temperature: 0.0
+    max_chunk_chars: 12000
 
 scan:
   # How code is passed to the model:
@@ -45,6 +51,7 @@ scan:
   drop_unverified: true           # drop findings whose evidence quote isn't in the code
 
 loop:
+  students: [student, student2]   # model keys above; each is measured before/after the same lessons
   student_runs: 3                 # repeat each student scan to measure variance
   max_lessons: 12
 
