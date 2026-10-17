@@ -32,7 +32,10 @@ def scan(app: App, llm: LLM, categories: list[str], strategy: str = "packed", de
         except Exception as e:  # one bad chunk shouldn't kill the whole scan
             print(f"    failed: {e}")
             continue
-        for raw in reply.get("findings", []):
+        items = reply.get("findings", []) if isinstance(reply, dict) else []
+        for raw in items if isinstance(items, list) else []:
+            if not isinstance(raw, dict):          # small models sometimes return junk items
+                continue
             finding = _to_finding(raw, categories)
             if _locate(finding, all_files) or not drop_unverified:
                 findings.append(finding)

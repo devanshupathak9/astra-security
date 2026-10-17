@@ -18,7 +18,8 @@ class LLM:
         self.temperature = temperature
         self.max_chunk_chars = max_chunk_chars
         self.usage = {"input": 0, "output": 0}
-        self.client = OpenAI(api_key=os.environ[api_key_env], base_url=base_url)
+        # The SDK retries rate-limit (429) errors itself, waiting as long as the server asks
+        self.client = OpenAI(api_key=os.environ[api_key_env], base_url=base_url, max_retries=6)
 
     def ask_json(self, system: str, user: str, retries: int = 3) -> dict:
         """Send a prompt and return the model's reply parsed as JSON (retries on errors)."""
@@ -38,7 +39,7 @@ class LLM:
             except Exception:
                 if attempt == retries - 1:
                     raise
-                time.sleep(5 * (attempt + 1))   # rate limits on free tiers
+                time.sleep(5 * (attempt + 1))   # e.g. reply was not valid JSON
 
 
 def get_llm(config: dict, role: str) -> LLM:

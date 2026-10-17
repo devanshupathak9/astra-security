@@ -41,9 +41,25 @@ source .venv/bin/activate
 ## Run
 
 ```bash
-python main.py ingest                      # decompile + summary (exported components, files, libraries)
-python main.py chunks --model student      # how the app is split for that model
-python main.py scan --model teacher        # findings -> runs/<timestamp>/findings_teacher.json
-python main.py loop                        # (todo) teacher -> student experiment
-python main.py scan --app apks/other.apk   # a different app (.apk or decompiled folder)
+python main.py ingest                         # decompile + summary (exported components, files, libraries)
+python main.py chunks --strategy slices       # how the app is split into requests
+python main.py scan --model teacher           # findings -> runs/<ts>/, scored vs ground truth
+python main.py scan --model student           # same scan with the open model
+python main.py eval runs/<ts>/findings_*.json # re-score a saved findings file
+python main.py loop                           # teacher -> lessons -> student before/after
+python main.py loop --teacher-findings runs/<ts>/findings_teacher_slices.json   # reuse a teacher scan
+python main.py scan --app apks/other.apk      # a different app (.apk or decompiled folder)
 ```
+
+`--strategy packed | per_file | slices` changes how code is passed to the model (see `config.yaml`).
+
+## Teacher -> student loop
+
+1. Teacher scans the app.
+2. Student scans it N times without help -> recall **before**.
+3. Teacher turns its findings into general lessons in one call; lessons naming anything
+   from the app (class names, package, custom actions) are rejected.
+4. Student scans N times with the lessons in its prompt -> recall **after**.
+5. `runs/<ts>/report.md`: before vs after (mean ± std), per-bug hit counts, lessons used.
+
+Without a ground-truth file, the teacher's findings are used as labels.

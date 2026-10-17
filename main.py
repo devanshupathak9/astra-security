@@ -4,7 +4,8 @@
   python main.py chunks --model student         # show how the app is split for that model
   python main.py scan --model teacher           # scan, save findings, score vs ground truth
   python main.py eval runs/<ts>/findings_teacher.json   # re-score a saved findings file
-  python main.py loop                           # full teacher -> student experiment (todo)
+  python main.py loop                           # teacher -> lessons -> student before/after
+  python main.py loop --teacher-findings runs/<ts>/findings_teacher_slices.json   # reuse a teacher scan
 
   --app path/to/other.apk   a different app (an .apk or a decompiled folder)
   --strategy slices         how code is passed: packed | per_file | slices
@@ -19,6 +20,7 @@ from astra.chunker import STRATEGIES, make_chunks
 from astra.config import load_config
 from astra.ingest import load_app, summary
 from astra.llm import get_llm
+from astra.loop import run_loop
 from astra.match import load_groundtruth, report
 from astra.scan import scan
 from astra.schemas import Finding
@@ -32,6 +34,7 @@ def main():
     parser.add_argument("--model", default="teacher", help="key under `models` in config")
     parser.add_argument("--app", help="override app.path (an .apk or decompiled folder)")
     parser.add_argument("--strategy", choices=STRATEGIES, help="override scan.strategy")
+    parser.add_argument("--teacher-findings", help="loop: reuse a saved teacher findings file")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -41,8 +44,7 @@ def main():
     labels = load_groundtruth(gt_path) if gt_path and Path(gt_path).exists() else None
 
     if args.command == "eval":
-        findings = [Finding(**f) for f in json.loads(Path(args.findings).read_text())]
-        print(report(findings, labels) if labels else "No ground truth configured.")
+        print(report(load_findings(args.findings), labels) if labels else "No ground truth configured.")
         return
 
     app = load_app(args.app or config["app"]["path"], config)
@@ -61,9 +63,7 @@ def main():
         findings = scan(app, get_llm(config, args.model), config["categories"], strategy, depth,
                         drop_unverified=config["scan"]["drop_unverified"])
 
-        out = Path(config["output_dir"]) / datetime.now().strftime("%Y%m%d-%H%M%S")
-        out.mkdir(parents=True, exist_ok=True)
-        path = out / f"findings_{args.model}_{strategy}.json"
+        path = new_run_dir(config) / f"findings_{args.model}_{strategy}.json"
         path.write_text(json.dumps([asdict(f) for f in findings], indent=2))
         for f in findings:
             print(f"  [{f.severity:8}] {f.category:28} {Path(f.file).name}:{f.line}  {f.title}")
@@ -71,8 +71,21 @@ def main():
         if labels:
             print("\n" + report(findings, labels))
 
-    else:
-        raise NotImplementedError("loop: next step")
+    elif args.command == "loop":
+        out = new_run_dir(config)
+        saved = load_findings(args.teacher_findings) if args.teacher_findings else None
+        print(run_loop(app, config, labels, strategy, depth, out, saved))
+        print(f"\nAll outputs saved in {out}/")
+
+
+def new_run_dir(config: dict) -> Path:
+    out = Path(config["output_dir"]) / datetime.now().strftime("%Y%m%d-%H%M%S")
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def load_findings(path: str) -> list[Finding]:
+    return [Finding(**f) for f in json.loads(Path(path).read_text())]
 
 
 if __name__ == "__main__":
