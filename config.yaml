@@ -29,7 +29,7 @@ models:
     temperature: 0.0
     max_chunk_chars: 20000        # how much code goes into one request
   student:
-    model: llama-3.1-8b-instant   # any open model on Groq
+    model: openai/gpt-oss-20b     # OpenAI open-weight model, hosted on Groq
     api_key_env: GROQ_API_KEY
     base_url: https://api.groq.com/openai/v1
     temperature: 0.0
