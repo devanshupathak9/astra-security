@@ -24,13 +24,14 @@ def scan(app: App, llm: LLM, categories: list[str], strategy: str = "packed", de
     chunks = make_chunks(app, llm.max_chunk_chars, strategy, depth)
     all_files = {"AndroidManifest.xml": app.manifest_xml, **app.resources, **app.sources}
 
-    findings, dropped = [], 0
+    findings, dropped, failed = [], 0, 0
     for chunk in chunks:
         print(f"  chunk {chunk.id + 1}/{len(chunks)}: {len(chunk.files)} files, {len(chunk.text):,} chars")
         try:
             reply = llm.ask_json(system, chunk.text)
         except Exception as e:  # one bad chunk shouldn't kill the whole scan
-            print(f"    failed: {e}")
+            print(f"    failed: {str(e)[:150]}")
+            failed += 1
             continue
         items = reply.get("findings", []) if isinstance(reply, dict) else []
         for raw in items if isinstance(items, list) else []:
@@ -44,6 +45,8 @@ def scan(app: App, llm: LLM, categories: list[str], strategy: str = "packed", de
 
     findings = _dedupe(findings)
     print(f"  {len(findings)} findings ({dropped} dropped: evidence not found in code)")
+    if failed:
+        print(f"  WARNING: {failed}/{len(chunks)} chunks failed, results are incomplete")
     print(f"  tokens: {llm.usage['input']:,} in / {llm.usage['output']:,} out")
     return findings
 

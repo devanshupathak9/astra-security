@@ -22,6 +22,10 @@ ingest:
 
 models:
   # Adding a model = adding an entry here. Any OpenAI-compatible API works via base_url.
+  # Optional per model:
+  #   temperature: null   -> use the model's default (some newer OpenAI models require this)
+  #   max_tokens: 8192    -> output limit; reasoning models need room to think before answering
+  #   params: {...}       -> extra API options, e.g. {reasoning_effort: low} for gpt-oss
   teacher:
     model: gpt-4o-mini            # set to a model your OpenAI key can use
     api_key_env: OPENAI_API_KEY
@@ -34,6 +38,7 @@ models:
     base_url: https://api.groq.com/openai/v1
     temperature: 0.0
     max_chunk_chars: 12000        # small models / free tiers have small context and rate limits
+    max_tokens: 8192              # replies with reasoning use 2-5k tokens; Groq's default 2048 is too small
   student2:
     model: qwen/qwen3.8-27b       # a second open model from a different family
     api_key_env: GROQ_API_KEY
