@@ -53,6 +53,18 @@ python main.py scan --app apks/other.apk      # a different app (.apk or decompi
 
 `--strategy packed | per_file | slices` changes how code is passed to the model (see `config.yaml`).
 
+## Step by step
+
+The same experiment as `loop`, one command per step, so every intermediate file can be inspected:
+
+```bash
+python main.py scan --model teacher                                    # 1. teacher findings
+python main.py scan --model student                                    # 2. student alone (before)
+python main.py lessons runs/<ts>/findings_teacher_slices.json          # 3. -> runs/<ts>/lessons.json
+python main.py scan --model student --lessons runs/<ts>/lessons.json   # 4. student with lessons (after)
+python main.py eval <step 2 file> <step 4 file>                        # before vs after
+```
+
 ## Teacher -> student loop
 
 1. Teacher scans the app.
