@@ -4,9 +4,9 @@ Static scan of a decompiled Android app with a frontier model (teacher), the sam
 small open model (student), then teacher-written **general lessons** to improve the student.
 We measure the student's recall before and after.
 
-**Submission:** [`docs/SUBMISSION.md`](docs/SUBMISSION.md) (checklist) ·
-[`docs/writeup.md`](docs/writeup.md) (Google Doc content) · [`docs/results.md`](docs/results.md)
-(recall before / after) · [`docs/architecture.md`](docs/architecture.md)
+**Docs:** [`docs/writeup.md`](docs/writeup.md) (write-up) · [`docs/results.md`](docs/results.md)
+(recall before / after) · [`docs/architecture.md`](docs/architecture.md) ·
+[`docs/problem_statement.md`](docs/problem_statement.md)
 
 ## Quick start
 
@@ -41,7 +41,7 @@ APK ─► ingest ─► App ─► scan(teacher) ─► findings ─► lessons
 | `astra/loop.py` | Runs the full teacher → student experiment |
 | `prompts/` | Prompt text, kept out of code |
 | `groundtruth/` | Labelled vulns per app (YAML). A new app = a new file |
-| `docs/` | Submission guide, write-up, results, architecture, problem statement |
+| `docs/` | Write-up, results, architecture, problem statement |
 | `run_all.sh` | Runs the whole experiment with one command |
 | `apks/`, `runs/` | Inputs and outputs (gitignored) |
 
