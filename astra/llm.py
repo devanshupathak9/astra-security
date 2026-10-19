@@ -22,7 +22,9 @@ class LLM(ABC):
                  max_chunk_chars: int = 20000, max_tokens: int = 8192,
                  params: dict | None = None, **_):
         self.model = model
-        self.api_key = os.environ[api_key_env]
+        self.api_key = os.environ.get(api_key_env, "")
+        if not self.api_key:
+            raise ValueError(f"{api_key_env} is not set: add it to .env")
         self.temperature = temperature          # None = use the model's default
         self.max_chunk_chars = max_chunk_chars  # how much code fits in one request (used by the chunker)
         self.max_tokens = max_tokens            # reply limit; reasoning models need room to think

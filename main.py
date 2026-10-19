@@ -121,7 +121,10 @@ def main():
 def list_models(settings: dict) -> None:
     """Print the model ids an OpenAI-compatible key can use (OpenAI, Groq, ...)."""
     from openai import OpenAI
-    client = OpenAI(api_key=os.environ[settings["api_key_env"]], base_url=settings.get("base_url"))
+    key = os.environ.get(settings["api_key_env"], "")
+    if not key:
+        raise SystemExit(f"{settings['api_key_env']} is not set: add it to .env")
+    client = OpenAI(api_key=key, base_url=settings.get("base_url"))
     for model_id in sorted(m.id for m in client.models.list().data):
         print(model_id)
 
