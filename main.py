@@ -14,11 +14,14 @@
   python main.py scan --model student --lessons runs/<ts>/lessons.json   # 4. student with lessons
   python main.py eval <step 2 file> <step 4 file>              # compare before vs after
 
+  python main.py models --model teacher         # list model ids available to that model's API key
+
   --app path/to/other.apk   a different app (an .apk or a decompiled folder)
   --strategy slices         how code is passed: packed | per_file | slices
 """
 import argparse
 import json
+import os
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -36,7 +39,7 @@ from astra.schemas import Finding
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=["ingest", "chunks", "scan", "lessons", "eval", "loop"])
+    parser.add_argument("command", choices=["ingest", "chunks", "scan", "lessons", "eval", "loop", "models"])
     parser.add_argument("findings", nargs="*", help="findings JSON file(s), for lessons / eval")
     parser.add_argument("--config", default="config.yaml")
     parser.add_argument("--model", default="teacher", help="key under `models` in config")
@@ -51,6 +54,10 @@ def main():
     depth = config["scan"]["slice_depth"]
     gt_path = config["app"].get("groundtruth")
     labels = load_groundtruth(gt_path) if gt_path and Path(gt_path).exists() else None
+
+    if args.command == "models":
+        list_models(config["models"][args.model])
+        return
 
     if args.command == "eval":
         if not labels:
@@ -109,6 +116,14 @@ def main():
         saved = load_findings(args.teacher_findings) if args.teacher_findings else None
         print(run_loop(app, config, labels, strategy, depth, out, saved))
         print(f"\nAll outputs saved in {out}/")
+
+
+def list_models(settings: dict) -> None:
+    """Print the model ids an OpenAI-compatible key can use (OpenAI, Groq, ...)."""
+    from openai import OpenAI
+    client = OpenAI(api_key=os.environ[settings["api_key_env"]], base_url=settings.get("base_url"))
+    for model_id in sorted(m.id for m in client.models.list().data):
+        print(model_id)
 
 
 def compare(paths: list[str], labels) -> str:

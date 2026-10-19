@@ -3,6 +3,9 @@
 1. One teacher call turns all its findings into general rules (prompts/lessons.md).
 2. Leak filter: drop any lesson that names something from this app (class names,
    package, custom intent actions), so lessons stay general and the lift is honest.
+3. Placebo: generic advice with the same number and length of items as the lessons
+   (prompts/placebo.md). Used as a control: if the student improves as much with the
+   placebo as with the lessons, the lift came from a longer prompt, not from the lessons.
 """
 import json
 import re
@@ -44,3 +47,17 @@ def app_terms(app: App) -> set[str]:
         for f in c.intent_filters:
             terms |= {a for a in re.findall(r"action=(\S+)", f) if a.startswith(app.package)}
     return {t for t in terms if len(t) >= MIN_TERM_LEN}
+
+
+def make_placebo(lessons: list[str]) -> list[str]:
+    """Same number of items as `lessons`, each about as long, with no security knowledge."""
+    lines = Path("prompts/placebo.md").read_text().split("\n")
+    lines = [l.strip() for l in lines if l.strip()]
+    placebo, i = [], 0
+    for lesson in lessons:
+        item = ""
+        while len(item) < len(lesson):
+            item = (item + " " + lines[i % len(lines)]).strip()
+            i += 1
+        placebo.append(item)
+    return placebo

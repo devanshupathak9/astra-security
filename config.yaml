@@ -21,30 +21,40 @@ ingest:
   resource_globs: ["**/res/xml/*.xml", "**/res/values/strings.xml", "**/assets/*.json", "**/assets/*.properties"]
 
 models:
-  # Adding a model = adding an entry here. Any OpenAI-compatible API works via base_url.
-  # Optional per model:
-  #   temperature: null   -> use the model's default (some newer OpenAI models require this)
-  #   max_tokens: 8192    -> output limit; reasoning models need room to think before answering
-  #   params: {...}       -> extra API options, e.g. {reasoning_effort: low} for gpt-oss
+  # Model ids, keys and endpoints come from .env (see .env.example), so switching
+  # models or providers never needs a code change.   ${VAR:-default} = env var, with a default.
+  #
+  #   provider: openai     -> any OpenAI-compatible API (OpenAI, Groq, Together, Ollama, vLLM)
+  #   provider: anthropic  -> Claude via Anthropic's SDK
+  #   base_url             -> empty = api.openai.com; Groq = https://api.groq.com/openai/v1
+  #   temperature          -> empty = the model's default (newer OpenAI models only accept the default)
+  #   max_chunk_chars      -> how much code goes into one request
+  #   max_tokens           -> reply limit; reasoning models need room to think before answering
+  #   params: {...}        -> extra API options, e.g. {reasoning_effort: low}
   teacher:
-    model: gpt-4o-mini            # set to a model your OpenAI key can use
-    api_key_env: OPENAI_API_KEY
-    base_url: null                # null = api.openai.com
-    temperature: 0.0
-    max_chunk_chars: 20000        # how much code goes into one request
+    provider: ${TEACHER_PROVIDER:-openai}
+    model: ${TEACHER_MODEL}
+    api_key_env: ${TEACHER_API_KEY_ENV:-OPENAI_API_KEY}
+    base_url: ${TEACHER_BASE_URL:-}
+    temperature: ${TEACHER_TEMPERATURE:-}
+    max_chunk_chars: 20000
+    max_tokens: 16000
   student:
-    model: openai/gpt-oss-20b     # OpenAI open-weight model, hosted on Groq
-    api_key_env: GROQ_API_KEY
-    base_url: https://api.groq.com/openai/v1
-    temperature: 0.0
-    max_chunk_chars: 12000        # small models / free tiers have small context and rate limits
-    max_tokens: 8192              # replies with reasoning use 2-5k tokens; Groq's default 2048 is too small
-  student2:
-    model: qwen/qwen3.8-27b       # a second open model from a different family
+    provider: ${STUDENT_PROVIDER:-openai}
+    model: ${STUDENT_MODEL}
+    api_key_env: ${STUDENT_API_KEY_ENV:-OPENAI_API_KEY}
+    base_url: ${STUDENT_BASE_URL:-}
+    temperature: ${STUDENT_TEMPERATURE:-}
+    max_chunk_chars: 12000
+    max_tokens: 8192
+  student2:                       # optional second student: an open model on Groq's free tier
+    provider: openai
+    model: ${STUDENT2_MODEL:-openai/gpt-oss-20b}
     api_key_env: GROQ_API_KEY
     base_url: https://api.groq.com/openai/v1
     temperature: 0.0
     max_chunk_chars: 12000
+    max_tokens: 8192              # gpt-oss replies use 2-5k tokens with reasoning; Groq's default 2048 is too small
 
 scan:
   # How code is passed to the model:
@@ -56,8 +66,9 @@ scan:
   drop_unverified: true           # drop findings whose evidence quote isn't in the code
 
 loop:
-  students: [student, student2]   # model keys above; each is measured before/after the same lessons
-  student_runs: 3                 # repeat each student scan to measure variance
+  students: [${STUDENTS:-student}]   # model keys above, e.g. STUDENTS=student,student2 in .env
+  student_runs: ${STUDENT_RUNS:-1}   # repeat each student scan to measure variance
+  placebo: true                   # also run each student with generic advice of the same length (control)
   max_lessons: 12
 
 output_dir: runs
