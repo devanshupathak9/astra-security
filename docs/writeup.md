@@ -17,6 +17,17 @@ Run: `./run_all.sh --free` · teacher `openai/gpt-oss-120b`, student `openai/gpt
 | Findings reported | 22 | 25 | 30 | | |
 | Precision | 59% | 52% | 47% | | |
 
+**How to read these numbers**
+- **Recall** = how many of the 19 known bugs were found (14/19 = 74%).
+- **Strict** = a bug counts only if the finding is in the right file **and** names the right bug type.
+  It is the minimum the model really found.
+- **Lenient** = the right file is enough, even with the wrong label. It is the maximum.
+- **Placebo** is not a score but a control run: the student gets generic advice ("be thorough, read
+  every file") of the same length as the lessons. If it helped as much as the lessons, the gain
+  would come from a longer prompt, not from what the lessons teach.
+- Here: lenient stayed at 95%, so the student already looked in the right places. The lessons
+  mainly helped it recognise and name the bug correctly (strict 68% → 74%).
+
 Teacher `gpt-oss-120b`: strict recall 74% (14/19), lenient 100% (19/19), 32 findings.
 12 lessons written in one call; the leak filter rejected none.
 
