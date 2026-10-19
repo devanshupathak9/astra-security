@@ -5,45 +5,56 @@ Repo: https://github.com/devanshupathak9/astra-security · Architecture: `docs/a
 
 ---
 
-## 1. Results: the student's recall before and after the lessons
+## 1. Results: the open model's recall before and after the lessons
 
-> Fill in from `runs/<ts>/report.md` after the final run (`python main.py loop`).
+Run: `./run_all.sh --free` · teacher `openai/gpt-oss-120b`, student `openai/gpt-oss-20b`
+(both open-weight, on Groq) · slices strategy · 1 run per condition · full report: `docs/results.md`
 
-| Student | Before | Placebo | After | Lift vs before | Lift vs placebo |
+| Student `gpt-oss-20b` | Before | Placebo | **After lessons** | Lift vs before | Lift vs placebo |
 |---|---|---|---|---|---|
-| `<STUDENT_MODEL>` | | | | | |
-| `openai/gpt-oss-20b` (Groq) | | | | | |
+| **Strict recall** (right file + right type) | 68% (13/19) | 68% (13/19) | **74% (14/19)** | **+5 pts** | +5 pts |
+| Lenient recall (right file) | 95% (18/19) | 89% (17/19) | 95% (18/19) | 0 pts | +5 pts |
+| Findings reported | 22 | 25 | 30 | | |
+| Precision | 59% | 52% | 47% | | |
 
-Teacher `<TEACHER_MODEL>`: strict recall __ %, lenient __ %. Strict = right file **and** right category; lenient = right file.
+Teacher `gpt-oss-120b`: strict recall 74% (14/19), lenient 100% (19/19), 32 findings.
+12 lessons written in one call; the leak filter rejected none.
 
-**Test run so far** (teacher `gpt-oss-120b`, student `gpt-oss-20b`, both on Groq, slices strategy, 1 run):
+**What changed, bug by bug (strict)**
 
-| | Strict recall | Lenient recall | Findings |
+| Bug | Before | After | Covered by a lesson? |
 |---|---|---|---|
-| Teacher | 74% (14/19) | 100% (19/19) | 32 |
-| Student before lessons | 68% (13/19) | 95% (18/19) | 27 |
-| Student after lessons | – (run stopped) | – | – |
+| 7. File theft via share/chooser activity | ✗ | ✓ | yes – exported components taking untrusted input |
+| 11. FileProvider shares the root path | ✗ | ✓ | yes – "broad paths like `<root-path path="/">`" |
+| 14. setResult returns the caller's intent | ✗ | ✓ | yes – "returning the caller's Intent as a result" |
+| 13. Implicit intent intercepted to load a URL | ✓ | ✗ | partly |
+| 16. SSL errors ignored in WebView | ✓ | ✗ | yes |
 
-The teacher produced 12 lessons; the leak filter rejected none. Example:
-*"Returning the caller's Intent as a result (e.g. setResult(RESULT_OK, getIntent())) in an exported
-activity can leak all supplied extras back to the caller."*
+**What it means, honestly**
+- The lessons helped: the three bugs gained are exactly the patterns the lessons describe, and the
+  placebo (generic advice of the same length) gained nothing in strict recall. So the gain came
+  from the lessons' content, not from a longer prompt.
+- The net lift is small: +1 bug (+5 pts). Two bugs found before were missed after; with one run
+  per condition, that is most likely normal run-to-run variation. More runs (`STUDENT_RUNS=3`)
+  would give mean ± spread.
+- Little room to grow: the student already found 13/19 alone, and it can't learn what the teacher
+  didn't find (the teacher missed 5 bugs in strict terms).
+- With lessons the student reports more (22 → 30 findings), so precision drops (59% → 47%).
 
 **What I learned along the way**
 - With a small teacher (`gpt-4o-mini`) on large 60k-character chunks, the teacher found only 5/19 and
   the student alone already beat it. A teacher weaker than the student cannot produce a lift, so
-  teacher strength matters more than anything else.
+  teacher strength matters most.
 - Large chunks made models stop after a few findings. Smaller, related chunks ("slices") helped most.
 - Early student runs scored lower (9/19) partly because some chunks silently failed: the reasoning
-  model spent its 2,048-token reply budget thinking and returned nothing. Fixed by raising the limit,
-  and failed chunks are now counted and reported, so incomplete runs can't pass unnoticed.
-- A strong student leaves little room: at 13/19 before, the possible lift is at most 6 bugs.
+  model spent its 2,048-token reply budget thinking and returned nothing. Fixed by raising the
+  limit; failed chunks are now counted and reported, so an incomplete run can't pass unnoticed.
 
 **Honest limits.** 19 bugs in one app is a small sample: one bug is about 5 points of recall, and
-model runs vary, so the loop repeats each condition N times and reports mean ± std. The lessons
-were written from this app's findings and tested on the same app, which shows they help *here*, not
-that they generalize. The real test is held-out: learn lessons on app A, then measure the lift on
-app B the teacher never saw (e.g. DIVA, AndroGoat, OVAA). The pipeline already supports this,
-because `lessons.json` is a file you can pass to `scan --lessons` on any app.
+model runs vary. The lessons were written from this app's findings and tested on the same app,
+which shows they help *here*, not that they generalize. The real test is held-out: learn lessons
+on app A, then measure the lift on app B the teacher never saw (e.g. DIVA, AndroGoat, OVAA). The
+pipeline supports this already: `lessons.json` can be passed to `scan --lessons` on any app.
 
 ---
 
@@ -174,22 +185,24 @@ with two test accounts can try it and confirm it with the canary in the other ac
 
 ## 5. Models and why
 
-| Role | Model | Why |
+| Role | Model used for the results | Why |
 |---|---|---|
-| Teacher | `<TEACHER_MODEL>` (OpenAI) | A strong frontier model: the teacher's recall caps everything the student can learn. |
-| Student | `<STUDENT_MODEL>` (OpenAI, smallest/cheapest) | Cheap and fast with no free-tier rate limits, so many runs are affordable. |
-| Open student | `openai/gpt-oss-20b` on Groq | OpenAI's open-weight model, the kind of model Astra would self-host at scale; free tier. |
-| Test teacher | `openai/gpt-oss-120b` on Groq | Free, used while building and testing the pipeline. |
+| Teacher | `openai/gpt-oss-120b` (Groq) | The strongest model available on the free tier; clearly stronger than the student (74% vs 68% strict, 100% vs 95% lenient). |
+| Student | `openai/gpt-oss-20b` (Groq) | OpenAI's open-weight model, the kind of model Astra would self-host at scale; weaker than the teacher, cheap, free tier. |
 
-All model ids, keys and endpoints come from `.env`; switching any of them is a `.env` change. The
-model layer is one small interface (`LLM.ask_json`) with one class per provider: OpenAI-compatible
-APIs (OpenAI, Groq, Together, Ollama, vLLM) and Anthropic. Adding a provider is one class plus one
-registry line.
+Also tried: `gpt-4o-mini` as teacher. It found only 5/19 on large chunks, fewer than the student
+alone, so it could not teach anything. Lesson learned: the teacher must be clearly stronger than
+the student, or there is no lift to measure.
+
+**Switching models is a `.env` change.** Teacher and student model ids, keys and endpoints come
+from `.env` (`TEACHER_MODEL`, `STUDENT_MODEL`, ...). An OpenAI frontier teacher, a smaller OpenAI
+student, or Claude (`TEACHER_PROVIDER=anthropic`) need no code change. The model layer is one
+small interface (`LLM.ask_json`) with one class per provider: OpenAI-compatible APIs (OpenAI, Groq,
+Together, Ollama, vLLM) and Anthropic. Adding a provider is one class plus one registry line.
 
 Practical notes: reasoning models need a large reply limit (they think before answering);
-Groq's free tier allows about 8k tokens per minute for `gpt-oss-20b`, so a student scan takes
-~15 minutes there; newer OpenAI models only accept their default temperature, so temperature is
-optional in config.
+Groq's free tier allows about 8k tokens per minute, so the full run takes about 30 minutes there;
+newer OpenAI models only accept their default temperature, so temperature is optional in config.
 
 ---
 

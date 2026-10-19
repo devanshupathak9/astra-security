@@ -37,16 +37,16 @@ models:
     api_key_env: ${TEACHER_API_KEY_ENV:-OPENAI_API_KEY}
     base_url: ${TEACHER_BASE_URL:-}
     temperature: ${TEACHER_TEMPERATURE:-}
-    max_chunk_chars: 20000
-    max_tokens: 16000
+    max_chunk_chars: ${TEACHER_MAX_CHUNK_CHARS:-20000}
+    max_tokens: ${TEACHER_MAX_TOKENS:-16000}
   student:
     provider: ${STUDENT_PROVIDER:-openai}
     model: ${STUDENT_MODEL}
     api_key_env: ${STUDENT_API_KEY_ENV:-OPENAI_API_KEY}
     base_url: ${STUDENT_BASE_URL:-}
     temperature: ${STUDENT_TEMPERATURE:-}
-    max_chunk_chars: 12000
-    max_tokens: 8192
+    max_chunk_chars: ${STUDENT_MAX_CHUNK_CHARS:-12000}
+    max_tokens: ${STUDENT_MAX_TOKENS:-8192}
   student2:                       # optional second student: an open model on Groq's free tier
     provider: openai
     model: ${STUDENT2_MODEL:-openai/gpt-oss-20b}
