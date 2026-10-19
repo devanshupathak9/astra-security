@@ -7,6 +7,8 @@
 #                                (teacher gpt-oss-120b, student gpt-oss-20b); needs GROQ_API_KEY
 #   ./run_all.sh --app my.apk    a different app (.apk or decompiled folder); combine with --free
 #   ./run_all.sh --teacher-findings runs/<ts>/teacher_findings.json   reuse a saved teacher scan
+#   ./run_all.sh --app my.apk --groundtruth my_bugs.yaml   score against your own answer key
+#                                (without it, a new app is scored against the teacher's findings)
 #
 # Output: runs/<time>/report.md (also copied to docs/results.md) and runs/<time>/run.log
 # Survives logout:  nohup ./run_all.sh --free > /dev/null 2>&1 &
@@ -25,7 +27,8 @@ while [ $# -gt 0 ]; do
       export STUDENT_API_KEY_ENV=GROQ_API_KEY
       shift ;;
     --app) APP_ARGS=(--app "$2"); shift 2 ;;
-    --teacher-findings) LOOP_ARGS=(--teacher-findings "$2"); shift 2 ;;
+    --teacher-findings) LOOP_ARGS+=(--teacher-findings "$2"); shift 2 ;;
+    --groundtruth) LOOP_ARGS+=(--groundtruth "$2"); shift 2 ;;
     *) echo "unknown option: $1"; exit 1 ;;
   esac
 done

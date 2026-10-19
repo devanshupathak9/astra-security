@@ -8,14 +8,44 @@ We measure the student's recall before and after.
 (recall before / after) · [`docs/architecture.md`](docs/architecture.md) ·
 [`docs/problem_statement.md`](docs/problem_statement.md)
 
-## Quick start
+## Quick start (3 steps)
+
+**1. Setup** (one time; installs Python deps, Java + jadx locally, downloads InsecureShop, creates `.env`)
+```bash
+./setup.sh
+```
+
+**2. Choose models in `.env`** (copy from `.env.example`). Tested setup:
+```bash
+OPENAI_API_KEY=sk-...
+GROQ_API_KEY=gsk_...
+TEACHER_MODEL=gpt-6.1-sol
+STUDENT_MODEL=openai/gpt-oss-20b
+STUDENT_BASE_URL=https://api.groq.com/openai/v1
+STUDENT_API_KEY_ENV=GROQ_API_KEY
+```
+Each name must appear only once. `python main.py models --model teacher` lists the model ids your key can use.
+
+**3. Run everything**
+```bash
+./run_all.sh
+```
+Teacher scan → lessons → student before / placebo / after → report.
+Result: `runs/<time>/report.md` (for InsecureShop also copied to `docs/results.md`).
+Takes ~30 min with a student on Groq's free tier (rate limits); `./run_all.sh --free` runs
+teacher and student on Groq only (needs just `GROQ_API_KEY`).
+
+## Run on your own APK
 
 ```bash
-./setup.sh               # one time: Python deps, Java + jadx, sample APK, .env
-./run_all.sh --free      # whole experiment on Groq's free tier (open models), ~1 hour
-./run_all.sh             # same, with the models set in .env
+./run_all.sh --app path/to/your.apk                               # an .apk or a decompiled folder
+./run_all.sh --app path/to/your.apk --groundtruth your_bugs.yaml  # score against your answer key
 ```
-Result: `runs/<time>/report.md`, also copied to `docs/results.md`.
+- Without `--groundtruth`, the **teacher's findings are the answer key**: the report shows how
+  close the student gets to the teacher, before and after the lessons.
+- An answer key is a YAML list like `groundtruth/insecureshop.yaml`
+  (`id`, `title`, `categories` from `config.yaml`, `files` where the bug lives).
+- Nothing app-specific is in the code: the app's package, components and code are read from its manifest.
 
 ## Flow
 

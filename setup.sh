@@ -77,4 +77,4 @@ echo "==> Test: ingest"
 python main.py ingest
 
 echo
-echo "Done. Next: add OPENAI_API_KEY to .env, then: python main.py scan --model teacher"
+echo "Done. Next: put your API keys in .env (see .env.example), then run: ./run_all.sh"

@@ -47,12 +47,16 @@ def main():
     parser.add_argument("--strategy", choices=STRATEGIES, help="override scan.strategy")
     parser.add_argument("--teacher-findings", help="loop: reuse a saved teacher findings file")
     parser.add_argument("--lessons", help="scan: add the lessons from this lessons.json to the prompt")
+    parser.add_argument("--groundtruth", help="answer-key YAML for the app (default: config app.groundtruth, "
+                                              "only when --app is not given)")
     args = parser.parse_args()
 
     config = load_config(args.config)
     strategy = args.strategy or config["scan"]["strategy"]
     depth = config["scan"]["slice_depth"]
-    gt_path = config["app"].get("groundtruth")
+    # The configured answer key belongs to the configured app. For another app (--app), use its own
+    # answer key (--groundtruth) or none: then the teacher's findings become the labels.
+    gt_path = args.groundtruth or (None if args.app else config["app"].get("groundtruth"))
     labels = load_groundtruth(gt_path) if gt_path and Path(gt_path).exists() else None
 
     if args.command == "models":
