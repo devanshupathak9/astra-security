@@ -35,7 +35,7 @@ class LLM(ABC):
     def _complete(self, system: str, user: str) -> tuple[str, int, int]:
         """Send one request. Return (reply text, input tokens, output tokens)."""
 
-    def ask_json(self, system: str, user: str, retries: int = 3) -> dict:
+    def ask_json(self, system: str, user: str, retries: int = 5) -> dict:
         """Send a prompt and return the reply as a dict. Retries on errors and bad JSON."""
         for attempt in range(retries):
             try:
@@ -43,10 +43,12 @@ class LLM(ABC):
                 self.usage["input"] += tokens_in
                 self.usage["output"] += tokens_out
                 return parse_json(text)
-            except Exception:
+            except Exception as e:
                 if attempt == retries - 1:
                     raise
-                time.sleep(5 * (attempt + 1))
+                # Rate limits (429) need a real pause for the per-minute quota to refill
+                rate_limited = "429" in str(e) or "rate limit" in str(e).lower()
+                time.sleep(15 * 2 ** attempt if rate_limited else 5 * (attempt + 1))
 
     def _optional_args(self) -> dict:
         """Arguments sent only when set: temperature (if not None) and any extra params."""

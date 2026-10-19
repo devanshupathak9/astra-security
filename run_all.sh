@@ -6,6 +6,7 @@
 #   ./run_all.sh --free          free preset: everything on Groq with open models
 #                                (teacher gpt-oss-120b, student gpt-oss-20b); needs GROQ_API_KEY
 #   ./run_all.sh --app my.apk    a different app (.apk or decompiled folder); combine with --free
+#   ./run_all.sh --teacher-findings runs/<ts>/teacher_findings.json   reuse a saved teacher scan
 #
 # Output: runs/<time>/report.md (also copied to docs/results.md) and runs/<time>/run.log
 # Survives logout:  nohup ./run_all.sh --free > /dev/null 2>&1 &
@@ -14,6 +15,7 @@ cd "$(dirname "$0")"
 [ -f .venv/bin/activate ] && source .venv/bin/activate
 
 APP_ARGS=()
+LOOP_ARGS=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --free)
@@ -23,6 +25,7 @@ while [ $# -gt 0 ]; do
       export STUDENT_API_KEY_ENV=GROQ_API_KEY
       shift ;;
     --app) APP_ARGS=(--app "$2"); shift 2 ;;
+    --teacher-findings) LOOP_ARGS=(--teacher-findings "$2"); shift 2 ;;
     *) echo "unknown option: $1"; exit 1 ;;
   esac
 done
@@ -33,7 +36,7 @@ mkdir -p runs
   echo "=== $(date)  ingest"
   python3 -u main.py ingest ${APP_ARGS[@]+"${APP_ARGS[@]}"}
   echo "=== $(date)  teacher -> lessons -> students"
-  python3 -u main.py loop ${APP_ARGS[@]+"${APP_ARGS[@]}"}
+  python3 -u main.py loop ${APP_ARGS[@]+"${APP_ARGS[@]}"} ${LOOP_ARGS[@]+"${LOOP_ARGS[@]}"}
   echo "=== $(date)  done"
 } 2>&1 | tee "$LOG"
 
