@@ -29,6 +29,11 @@ Run: `./run_all.sh --free` · teacher `openai/gpt-oss-120b`, student `openai/gpt
   mainly helped it recognise and name the bug correctly (strict 68% → 74%).
 
 Teacher `gpt-oss-120b`: strict recall 74% (14/19), lenient 100% (19/19), 32 findings.
+
+**Stronger OpenAI teacher.** The teacher can be any model set in `.env`. With OpenAI's
+`gpt-6.1-sol` as teacher, the scan found **79% strict (15/19)**, 95% lenient, with 25 findings and
+none invented (every evidence quote was found in the code): a stronger teacher than `gpt-oss-120b`.
+The full student run with its lessons is slower on Groq's free tier and was not finished in time.
 12 lessons written in one call; the leak filter rejected none.
 
 **What changed, bug by bug (strict)**
@@ -199,6 +204,7 @@ with two test accounts can try it and confirm it with the canary in the other ac
 | Role | Model used for the results | Why |
 |---|---|---|
 | Teacher | `openai/gpt-oss-120b` (Groq) | The strongest model available on the free tier; clearly stronger than the student (74% vs 68% strict, 100% vs 95% lenient). |
+| Teacher (also tested) | `gpt-6.1-sol` (OpenAI) | A frontier OpenAI model; its scan alone scored 79% strict (15/19), the best teacher tested. |
 | Student | `openai/gpt-oss-20b` (Groq) | OpenAI's open-weight model, the kind of model Astra would self-host at scale; weaker than the teacher, cheap, free tier. |
 
 Also tried: `gpt-4o-mini` as teacher. It found only 5/19 on large chunks, fewer than the student
