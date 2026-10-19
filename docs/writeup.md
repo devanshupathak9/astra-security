@@ -205,11 +205,36 @@ Also tried: `gpt-4o-mini` as teacher. It found only 5/19 on large chunks, fewer 
 alone, so it could not teach anything. Lesson learned: the teacher must be clearly stronger than
 the student, or there is no lift to measure.
 
-**Switching models is a `.env` change.** Teacher and student model ids, keys and endpoints come
-from `.env` (`TEACHER_MODEL`, `STUDENT_MODEL`, ...). An OpenAI frontier teacher, a smaller OpenAI
-student, or Claude (`TEACHER_PROVIDER=anthropic`) need no code change. The model layer is one
-small interface (`LLM.ask_json`) with one class per provider: OpenAI-compatible APIs (OpenAI, Groq,
-Together, Ollama, vLLM) and Anthropic. Adding a provider is one class plus one registry line.
+### How to change models
+
+Models are chosen in `.env`, not in code. Each role (teacher, student) reads four settings:
+
+| Variable | Meaning |
+|---|---|
+| `TEACHER_MODEL` | model id (required) |
+| `TEACHER_PROVIDER` | `openai` (default: any OpenAI-compatible API) or `anthropic` |
+| `TEACHER_BASE_URL` | API address; empty = OpenAI |
+| `TEACHER_API_KEY_ENV` | name of the variable that holds the key (default `OPENAI_API_KEY`) |
+
+The student uses the same names with `STUDENT_`. Examples:
+
+| Teacher on | `.env` lines |
+|---|---|
+| OpenAI | `TEACHER_MODEL=gpt-6.1-sol` |
+| Groq | `TEACHER_MODEL=openai/gpt-oss-120b`, `TEACHER_BASE_URL=https://api.groq.com/openai/v1`, `TEACHER_API_KEY_ENV=GROQ_API_KEY` |
+| Claude | `TEACHER_PROVIDER=anthropic`, `TEACHER_MODEL=claude-sonnet-5-5`, `TEACHER_API_KEY_ENV=ANTHROPIC_API_KEY` |
+
+`.env.example` has ready-to-copy blocks for OpenAI, Groq, Claude, Gemini, Grok and local Ollama.
+
+**How it works in code.** `config.yaml` fills its model settings from `.env`. `get_llm()` reads
+`provider` and picks a class: `OpenAICompatibleLLM` (OpenAI, Groq, Gemini, Grok, Together,
+Ollama, vLLM) or `AnthropicLLM` (Claude). Both share one small interface, `LLM.ask_json()`; the
+rest of the pipeline only calls that, so it never changes. A provider with its own API format
+needs one class with a `_complete()` method plus one line in the `PROVIDERS` registry; retries,
+JSON parsing and token counting are inherited.
+
+Tested with real keys: OpenAI (`gpt-6.1-sol`, `gpt-6-luna`) and Groq (`gpt-oss-120b`,
+`gpt-oss-20b`). Claude was tested with a mocked SDK only.
 
 Practical notes: reasoning models need a large reply limit (they think before answering);
 Groq's free tier allows about 8k tokens per minute, so the full run takes about 30 minutes there;
