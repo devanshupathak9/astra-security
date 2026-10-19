@@ -31,7 +31,9 @@ Each name must appear only once. `python main.py models --model teacher` lists t
 ./run_all.sh
 ```
 Teacher scan → lessons → student before / placebo / after → report.
-Result: `runs/<time>/report.md` (for InsecureShop also copied to `docs/results.md`).
+Progress and the final report print in the terminal. The report is saved to
+`runs/<time>/report.md` (for InsecureShop also copied to `docs/results.md`), with every
+intermediate file (teacher findings, lessons, each student scan) in the same folder.
 Takes ~30 min with a student on Groq's free tier (rate limits); `./run_all.sh --free` runs
 teacher and student on Groq only (needs just `GROQ_API_KEY`).
 

@@ -5,6 +5,22 @@ Repo: https://github.com/devanshupathak9/astra-security · Architecture: `docs/a
 
 ---
 
+## How to run
+
+```bash
+./setup.sh                                   # one time: Python deps, Java + jadx, sample APK, .env
+# put API keys and model ids in .env (see .env.example)
+./run_all.sh                                 # InsecureShop
+./run_all.sh --app path/to/new.apk           # any other app (.apk or decompiled folder)
+./run_all.sh --app new.apk --groundtruth bugs.yaml   # score against your own answer key
+```
+
+`run_all.sh` runs every step: teacher scan → lessons → student before / placebo / after → report.
+Progress and the final report print in the terminal; the report is saved to `runs/<time>/report.md`.
+For a new app without an answer key, the teacher's findings are used as the labels.
+
+---
+
 ## 1. Results: the open model's recall before and after the lessons
 
 Run: `./run_all.sh --free` · teacher `openai/gpt-oss-120b`, student `openai/gpt-oss-20b`
@@ -29,12 +45,12 @@ Run: `./run_all.sh --free` · teacher `openai/gpt-oss-120b`, student `openai/gpt
   mainly helped it recognise and name the bug correctly (strict 68% → 74%).
 
 Teacher `gpt-oss-120b`: strict recall 74% (14/19), lenient 100% (19/19), 32 findings.
+It wrote 12 lessons in one call; the leak filter rejected none.
 
 **Stronger OpenAI teacher.** The teacher can be any model set in `.env`. With OpenAI's
-`gpt-6.1-sol` as teacher, the scan found **79% strict (15/19)**, 95% lenient, with 25 findings and
-none invented (every evidence quote was found in the code): a stronger teacher than `gpt-oss-120b`.
-The full student run with its lessons is slower on Groq's free tier and was not finished in time.
-12 lessons written in one call; the leak filter rejected none.
+`gpt-6.1-sol` as teacher, the scan found **79% strict (15/19)** and 95% lenient, with no invented
+findings. The score was the same on two separate runs on two machines (24 and 25 findings). The
+full student run with its lessons is slower on Groq's free tier and was not finished in time.
 
 **What changed, bug by bug (strict)**
 
@@ -46,7 +62,7 @@ The full student run with its lessons is slower on Groq's free tier and was not 
 | 13. Implicit intent intercepted to load a URL | ✓ | ✗ | partly |
 | 16. SSL errors ignored in WebView | ✓ | ✗ | yes |
 
-**What it means, honestly**
+**What it means**
 - The lessons helped: the three bugs gained are exactly the patterns the lessons describe, and the
   placebo (generic advice of the same length) gained nothing in strict recall. So the gain came
   from the lessons' content, not from a longer prompt.
@@ -66,7 +82,7 @@ The full student run with its lessons is slower on Groq's free tier and was not 
   model spent its 2,048-token reply budget thinking and returned nothing. Fixed by raising the
   limit; failed chunks are now counted and reported, so an incomplete run can't pass unnoticed.
 
-**Honest limits.** 19 bugs in one app is a small sample: one bug is about 5 points of recall, and
+**Limits.** 19 bugs in one app is a small sample: one bug is about 5 points of recall, and
 model runs vary. The lessons were written from this app's findings and tested on the same app,
 which shows they help *here*, not that they generalize. The real test is held-out: learn lessons
 on app A, then measure the lift on app B the teacher never saw (e.g. DIVA, AndroGoat, OVAA). The
@@ -89,7 +105,7 @@ allowed categories, e.g. `{id: 19, categories: [insecure_logging], files: [Login
 can't tick off three bugs.
 
 **Two scores.**
-- **Strict** = place + type. Honest lower bound.
+- **Strict** = place + type. Lower bound.
 - **Lenient** = place only. Upper bound for "right spot, wrong label": e.g. a password leaked
   through a broadcast was labelled `insecure_broadcast_receiver` instead of `implicit_intent`.
 
